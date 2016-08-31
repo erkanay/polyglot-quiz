@@ -18,8 +18,8 @@ $ python test.py
 >>> from quiz import PolyglotQuiz
 
 >>> text = open('anystory.txt', 'rt').read()
->>> # JJ --> Adjective
->>> polyglot = PolyglotQuiz(text, _type='JJ', regexp=r'\w+')
+>>> # IN --> Preposition or subordinating conjunction
+>>> polyglot = PolyglotQuiz(text, _type='IN', regexp=r'\w+')
 >>> polyglot.generate_quiz()
 ```
 ```
