@@ -47,8 +47,20 @@ class PolyglotQuiz(object):
         return self.tokenize(_text)
 
     @property
-    def get_sentences(self):
+    def _sentences(self):
         return sent_tokenize(self.text)
+
+    @property
+    def _questions(self):
+        questions = defaultdict(list)
+        for sentence in self._sentences:
+            mapping = self.map_words(sentence)
+            if self._type in mapping.keys():
+                rep = mapping[self._type][0]
+                questions[self._type].append(
+                    (re.sub(re.compile(r'\b%s\b' % rep), '___', sentence), rep)
+                )
+        return questions
 
     def map_words(self, _text):
         mapping = defaultdict(list)
@@ -57,39 +69,18 @@ class PolyglotQuiz(object):
             mapping[tag].append(word)
         return mapping
 
-    @property
-    def prepare_questions(self):
-        questions = defaultdict(list)
-        sentences = self.get_sentences
-        for sentence in sentences:
-            mapping = self.map_words(sentence)
-            if self._type in mapping.keys():
-                rep = mapping[self._type][0]
-                questions[self._type].append((re.sub(
-                    re.compile(r'\b%s\b' % rep), '___', sentence), rep))
-        return questions
-
     def generate_quiz(self):
         result = []
-        questions = self.get_questions
-        answers = self.get_answers
+        questions = self.get_questions()
+        answers = self.get_answers()
         for _, question in questions.items():
             print(question)
-            result.append(self.ANSWER_TEMPLATE.format(
-                _, answers[_]
-            ))
+            result.append(self.ANSWER_TEMPLATE.format(_, answers[_]))
         print(self.format_columns(result, 3))
 
-    @staticmethod
-    def format_columns(_list, cols):
-        lines = ('\t'.join(_list[i:i + cols]) for i in range(0, len(_list),
-                                                             cols))
-        return '\n'.join(lines)
-
-    @property
     def get_questions(self):
         mapping = self.map_words(self.text)
-        for _type, question in self.prepare_questions.items():
+        for _type, question in self._questions.items():
             for i, _question in enumerate(question, 1):
                 q = _question[0]
                 answer = _question[1]
@@ -97,13 +88,16 @@ class PolyglotQuiz(object):
                 choices = random.sample(set(mapping[_type]), 4)
                 if answer not in choices:
                     choices[random.randint(0, 3)] = answer
-                self.questions[i] = self.QUESTION_TEMPLATE.format(
-                    i, q, *choices)
+                self.questions[i] = self.QUESTION_TEMPLATE.format(i, q, *choices)
         return self.questions
 
-    @property
     def get_answers(self):
         return self.answers
+
+    @staticmethod
+    def format_columns(_list, cols):
+        lines = ('\t'.join(_list[i:i + cols]) for i in range(0, len(_list), cols))
+        return '\n'.join(lines)
 
     @staticmethod
     def read_manual():
